@@ -20,6 +20,7 @@ namespace Server.MirObjects
         public bool GMLogin, EnableGroupRecall, EnableGuildInvite, AllowMarriage, AllowLoverRecall, AllowMentor, HasMapShout, HasServerShout; //TODO - Remove        
 
         public long LastRecallTime, LastTeleportTime, LastProbeTime;
+        public long NextMailTime;
         public long MenteeEXP;        
 
         public bool WarZone = false;
@@ -1121,13 +1122,14 @@ namespace Server.MirObjects
                 Enqueue(new S.UpdateNotice { Notice = Settings.Notice });
             }
 
-            Spawned();
-
             SetLevelEffects();
 
             GetItemInfo(Connection);
             GetMapInfo(Connection);
             GetUserInfo(Connection);
+
+            Spawned();
+
             GetQuestInfo();
             GetRecipeInfo();
 
@@ -3545,6 +3547,7 @@ namespace Server.MirObjects
                             if (parts.Length < 2)
                             {
                                 Point target = Functions.PointMove(CurrentLocation, Direction, 1);
+                                if (!CurrentMap.ValidPoint(target)) return;
                                 Cell cell = CurrentMap.GetCell(target);
 
                                 if (cell.Objects == null || cell.Objects.Count < 1) return;
@@ -9285,7 +9288,11 @@ namespace Server.MirObjects
                 ReceiveChat("You have not been invited to a guild.", ChatType.System);
                 return;
             }
-            if (!accept) return;
+            if (!accept)
+            {
+                PendingGuildInvite = null;
+                return;
+            }
             if (!PendingGuildInvite.HasRoom())
             {
                 ReceiveChat(String.Format("{0} is full.", PendingGuildInvite.Name), ChatType.System);
@@ -9798,6 +9805,8 @@ namespace Server.MirObjects
             }
 
             Point target = Functions.PointMove(CurrentLocation, Direction, 1);
+
+            if (!CurrentMap.ValidPoint(target)) return;
             Cell cell = CurrentMap.GetCell(target);
             PlayerObject player = null;
 
@@ -10832,11 +10841,31 @@ namespace Server.MirObjects
 
         public void SendMail(string name, string message)
         {
+            if (Envir.Time < NextMailTime)
+            {
+                //not even an error: users shouldnt be sending mails so fast only bots do.
+                return;
+            }
+
+            NextMailTime = Envir.Time + 10000;
+
+            if (message.Length > 500)
+            {
+                ReceiveChat(string.Format("Sorry your text exceeds the size limit for mails"), ChatType.System);
+                return;
+            }
+
             CharacterInfo player = Envir.GetCharacterInfo(name);
 
             if (player == null)
             {
                 ReceiveChat(string.Format(GameLanguage.CouldNotFindPlayer, name), ChatType.System);
+                return;
+            }
+
+            if (player.Mail.Count > 50)
+            {
+                ReceiveChat("Recipients mailbox is full.", ChatType.System);
                 return;
             }
 
@@ -10865,11 +10894,31 @@ namespace Server.MirObjects
 
         public void SendMail(string name, string message, uint gold, ulong[] items, bool stamped)
         {
+            if (Envir.Time < NextMailTime)
+            {
+                //not even an error: users shouldnt be sending mails so fast only bots do.
+                return;
+            }
+
+            NextMailTime = Envir.Time + 10000;
+
+            if (message.Length > 500)
+            {
+                ReceiveChat(string.Format("Sorry your text exceeds the size limit for mails"), ChatType.System);
+                return;
+            }
+
             CharacterInfo player = Envir.GetCharacterInfo(name);
 
             if (player == null)
             {
                 ReceiveChat(string.Format(GameLanguage.CouldNotFindPlayer, name), ChatType.System);
+                return;
+            }
+
+            if (player.Mail.Count > 50)
+            {
+                ReceiveChat("Recipients mailbox is full.", ChatType.System);
                 return;
             }
 
@@ -12263,6 +12312,8 @@ namespace Server.MirObjects
             }
 
             Point target = Functions.PointMove(CurrentLocation, Direction, 1);
+
+            if (!CurrentMap.ValidPoint(target)) return;
             Cell cell = CurrentMap.GetCell(target);
             PlayerObject player = null;
 
@@ -12402,6 +12453,7 @@ namespace Server.MirObjects
 
 
             Point target = Functions.PointMove(CurrentLocation, Direction, 1);
+            if (!CurrentMap.ValidPoint(target)) return;
             Cell cell = CurrentMap.GetCell(target);
             PlayerObject player = null;
 
@@ -12904,7 +12956,7 @@ namespace Server.MirObjects
                     canAfford = true;
                     CreditCost = cost;
                 }
-                else
+                else if (Product.CanBuyGold)
                 {
                     //Needs to attempt to pay with gold and credits
                     var totalCost = ((Product.GoldPrice * Quantity) / cost) * (cost - Account.Credit);
@@ -13105,6 +13157,7 @@ namespace Server.MirObjects
             }
 
             var targetPosition = Functions.PointMove(CurrentLocation, Direction, 1);
+            if (!CurrentMap.ValidPoint(targetPosition)) return;
             var targetCell = CurrentMap.GetCell(targetPosition);
             PlayerObject targetPlayer = null;
 
