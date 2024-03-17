@@ -148,6 +148,7 @@ namespace Server.MirEnvir
 
         public LightSetting Lights;
         public LinkedList<MapObject> Objects = new LinkedList<MapObject>();
+        public List<MapObject> ActiveObjects = new List<MapObject>();
         public Dictionary<int, NPCScript> Scripts = new Dictionary<int, NPCScript>();
         public Dictionary<string, Timer> Timers = new Dictionary<string, Timer>();
 
@@ -492,6 +493,7 @@ namespace Server.MirEnvir
 
                 var processCount = 0;
                 var processRealCount = 0;
+                var lastindex = 0;
 
                 LinkedListNode<MapObject> current = null;
 
@@ -619,6 +621,41 @@ namespace Server.MirEnvir
                                 processCount++;
                             }
                             current = next;
+                        }
+
+                        DateTime loopTime = Now.AddMilliseconds(1);
+
+                        if (lastindex < 0) lastindex = ActiveObjects.Count;
+
+                        while (Now <= loopTime)
+                        {
+                            lastindex--;
+
+                            if (lastindex >= ActiveObjects.Count) continue;
+
+                            if (lastindex < 0) break;
+
+                            MapObject ob = ActiveObjects[lastindex];
+
+                            if (ob.Race == ObjectType.Player) continue;
+
+                            try
+                            {
+                                if (Time > ob.OperateTime)
+                                {
+                                    ob.Process();
+                                    ob.SetOperateTime();
+                                }
+                                processCount++;
+                            }
+                            catch (Exception ex)
+                            {
+                                ActiveObjects.Remove(ob);
+                                ob.Activated = false;
+
+                                MessageQueue.Enqueue(ex.Message);
+                                MessageQueue.Enqueue(ex.StackTrace);
+                            }
                         }
 
                         for (var i = 0; i < MapList.Count; i++)
@@ -1842,6 +1879,7 @@ namespace Server.MirEnvir
             StartPoints.Clear();
             StartItems.Clear();
             Objects.Clear();
+            ActiveObjects.Clear();
             Players.Clear();
             Heroes.Clear();
 

@@ -69,6 +69,7 @@ namespace Server
                 MonsterLabel.Text = $"Monsters: {Envir.MonsterCount}";
                 ConnectionsLabel.Text = $"Connections: {Envir.Connections.Count}";
                 BlockedIPsLabel.Text = $"Blocked IPs: {Envir.IPBlocks.Count(x => x.Value > Envir.Now)}";
+                ObjectLabel.Text = $"Objects: {Envir.ActiveObjects.Count} of {Envir.Objects.Count:#,##0}";
 
                 if (Settings.Multithreaded && (Envir.MobThreads != null))
                 {

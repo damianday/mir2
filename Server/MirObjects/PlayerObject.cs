@@ -1666,6 +1666,15 @@ namespace Server.MirObjects
                         {
                             ob.SendHealth(this);
                         }
+
+                        if (ob.Race != ObjectType.Player)
+                        {
+                            if (!ob.VisiblePlayers.Contains(this))
+                            {
+                                ob.VisiblePlayers.Add(this);
+                                ob.Activate();
+                            }
+                        }
                     }
                 }
             }

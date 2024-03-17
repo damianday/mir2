@@ -21,6 +21,8 @@ namespace Server.MirObjects.Monsters
             get { return false; }
         }
 
+        protected override bool CanDeactivate => false;
+
         protected internal Guard(MonsterInfo info)
             : base(info)
         {

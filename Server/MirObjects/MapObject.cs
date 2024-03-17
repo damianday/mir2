@@ -67,6 +67,16 @@ namespace Server.MirObjects
         public Color NameColour = Color.White;
 
         public bool Dead, Undead, Harvested, AutoRev;
+        public bool Activated;
+
+        protected virtual bool CanActivate
+        {
+            get { return VisiblePlayers.Count > 0; }
+        }
+        protected virtual bool CanDeactivate
+        {
+            get { return (VisiblePlayers.Count == 0 && ActionList.Count == 0); }
+        }
 
         public List<KeyValuePair<string, string>> NPCVar = new List<KeyValuePair<string, string>>();
 
@@ -181,6 +191,8 @@ namespace Server.MirObjects
         public PoisonType CurrentPoison = PoisonType.None;
         public List<DelayedAction> ActionList = new List<DelayedAction>();
 
+        public List<HumanObject> VisiblePlayers = new List<HumanObject>();
+
         public LinkedListNode<MapObject> Node;
         public LinkedListNode<MapObject> NodeThreaded;
         public long RevTime;
@@ -209,6 +221,8 @@ namespace Server.MirObjects
             if (Target != null && (Target.Node == null || Target.Dead)) Target = null;
             if (Owner != null && Owner.Node == null) Owner = null;
 
+            DeActivate();
+
             if (PKPoints > 0 && Envir.Time > PKPointTime)
             {
                 PKPointTime = Envir.Time + Settings.PKDelay * Settings.Second;
@@ -230,6 +244,14 @@ namespace Server.MirObjects
                 if (Envir.Time < ActionList[i].Time) continue;
                 Process(ActionList[i]);
                 ActionList.RemoveAt(i);
+            }
+
+            for (var i = VisiblePlayers.Count - 1; i >= 0; i--)
+            {
+                var player = VisiblePlayers[i];
+                if (player == null || player.Node == null || player.CurrentMap != CurrentMap ||
+                    !Functions.InRange(player.CurrentLocation, CurrentLocation, Globals.DataRange * 2))
+                    VisiblePlayers.RemoveAt(i);
             }
         }
 
@@ -282,10 +304,18 @@ namespace Server.MirObjects
         public virtual void Remove(HumanObject player)
         {
             player.Enqueue(new S.ObjectRemove { ObjectID = ObjectID });
+
+            VisiblePlayers.Remove(player);
         }
         public virtual void Add(HumanObject player)
         {
             if (player.Race != ObjectType.Player) return;
+
+            if (!VisiblePlayers.Contains(player))
+            {
+                VisiblePlayers.Add(player);
+                Activate();
+            }
 
             if (Race == ObjectType.Merchant)
             {
@@ -350,6 +380,8 @@ namespace Server.MirObjects
             BroadcastInfo();
             BroadcastHealthChange();
 
+            ActivateVisiblePlayers();
+
             InSafeZone = CurrentMap != null && CurrentMap.GetSafeZone(CurrentLocation) != null;
         }
         public virtual void Despawn()
@@ -364,11 +396,58 @@ namespace Server.MirObjects
             }
 
             ActionList.Clear();
+            VisiblePlayers.Clear();
 
             for (int i = Pets.Count - 1; i >= 0; i--)
                 Pets[i].Die();
 
             Node = null;
+
+            if (Activated)
+            {
+                Activated = false;
+                Envir.ActiveObjects.Remove(this);
+            }
+        }
+
+        public virtual void Activate()
+        {
+            if (Activated) return;
+
+            if (!CanActivate) return;
+
+            Activated = true;
+            Envir.ActiveObjects.Add(this);
+        }
+
+        public virtual void DeActivate()
+        {
+            if (!Activated) return;
+
+            if (!CanDeactivate) return;
+
+            Activated = false;
+            Envir.ActiveObjects.Remove(this);
+        }
+
+        protected void ActivateVisiblePlayers()
+        {
+            if (CurrentMap == null) return;
+
+            for (int i = CurrentMap.Players.Count - 1; i >= 0; i--)
+            {
+                var player = CurrentMap.Players[i];
+                if (player == this) continue;
+
+                if (Functions.InRange(CurrentLocation, player.CurrentLocation, Globals.DataRange))
+                {
+                    if (!VisiblePlayers.Contains(player))
+                    {
+                        VisiblePlayers.Add(player);
+                        Activate();
+                    }
+                }
+            }
         }
 
         public MapObject FindObject(uint targetID, int dist)

@@ -644,6 +644,20 @@ namespace Server.MirObjects
                     (!CurrentPoison.HasFlag(PoisonType.Stun) || (Info.Light == 10 || Info.Light == 5));
             }
         }
+        protected override bool CanActivate
+        {
+            get
+            {
+                return (base.CanActivate || Info.ViewRange > Globals.DataRange /*|| Info.IsBoss*/ || Master != null);
+            }
+        }
+        protected override bool CanDeactivate
+        {
+            get
+            {
+                return (base.CanDeactivate && Info.ViewRange <= Globals.DataRange && Target == null /*&& !Info.IsBoss*/ && Master == null && HP >= Stats[Stat.HP]);
+            }
+        }
         protected internal MonsterObject(MonsterInfo info)
         {
             Info = info;

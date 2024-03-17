@@ -8301,12 +8301,19 @@ namespace Server.MirObjects
         public override void Remove(MonsterObject monster)
         {
             Enqueue(new S.ObjectRemove { ObjectID = monster.ObjectID });
+            monster.VisiblePlayers.Remove(this);
         }
         public override void Add(MonsterObject monster)
         {
             Enqueue(monster.GetInfo());
 
             monster.SendHealth(this);
+
+            if (!monster.VisiblePlayers.Contains(this))
+            {
+                monster.VisiblePlayers.Add(this);
+                monster.Activate();
+            }
         }
         public override void SendHealth(HumanObject player)
         {

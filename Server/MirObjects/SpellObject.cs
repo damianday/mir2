@@ -46,6 +46,8 @@ namespace Server.MirObjects
             get { throw new NotSupportedException(); }
         }
 
+        protected override bool CanDeactivate => false;
+
 
         public override void Process()
         {

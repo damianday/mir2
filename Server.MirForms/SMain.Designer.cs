@@ -109,6 +109,7 @@ namespace Server
             monsterTunerToolStripMenuItem = new ToolStripMenuItem();
             dropBuilderToolStripMenuItem = new ToolStripMenuItem();
             InterfaceTimer = new Timer(components);
+            ObjectLabel = new ToolStripStatusLabel();
             MainTabs.SuspendLayout();
             tabPage1.SuspendLayout();
             tabPage2.SuspendLayout();
@@ -354,7 +355,7 @@ namespace Server
             // 
             // StatusBar
             // 
-            StatusBar.Items.AddRange(new ToolStripItem[] { PlayersLabel, MonsterLabel, ConnectionsLabel, BlockedIPsLabel, CycleDelayLabel });
+            StatusBar.Items.AddRange(new ToolStripItem[] { PlayersLabel, MonsterLabel, ConnectionsLabel, BlockedIPsLabel, ObjectLabel, CycleDelayLabel });
             StatusBar.Location = new Point(0, 431);
             StatusBar.Name = "StatusBar";
             StatusBar.Padding = new Padding(1, 0, 16, 0);
@@ -699,6 +700,13 @@ namespace Server
             InterfaceTimer.Enabled = true;
             InterfaceTimer.Tick += InterfaceTimer_Tick;
             // 
+            // ObjectLabel
+            // 
+            ObjectLabel.BorderSides = ToolStripStatusLabelBorderSides.Left | ToolStripStatusLabelBorderSides.Top | ToolStripStatusLabelBorderSides.Right | ToolStripStatusLabelBorderSides.Bottom;
+            ObjectLabel.Name = "ObjectLabel";
+            ObjectLabel.Size = new Size(74, 19);
+            ObjectLabel.Text = "Objects: 0/0";
+            // 
             // SMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -810,6 +818,7 @@ namespace Server
         private ColumnHeader columnHeader4;
         private ColumnHeader columnHeader5;
         private ColumnHeader columnHeader6;
+        private ToolStripStatusLabel ObjectLabel;
     }
 }
 

@@ -81,6 +81,8 @@ namespace Server.MirObjects
             }
         }
 
+        protected override bool CanDeactivate => false;
+
         public override ObjectType Race
         {
             get { return ObjectType.Creature; }

@@ -50,6 +50,8 @@ namespace Server.MirObjects
             get { throw new NotSupportedException(); }
         }
 
+        protected override bool CanDeactivate => false;
+
         public ItemObject(MapObject dropper, UserItem item, bool deathDrop = false)
         {
             if (deathDrop)//player dropped it when he died: allow for time to run back and pickup his drops
