@@ -34,6 +34,7 @@ namespace Server
             FilterTextBox = new TextBox();
             RefreshButton = new Button();
             AccountInfoPanel = new Panel();
+            Delaccbtn = new Button();
             CharactersListView = new ListView();
             characterName = new ColumnHeader();
             characterClass = new ColumnHeader();
@@ -93,7 +94,8 @@ namespace Server
             TotalServerGold = new Label();
             ServerCreditTextBox = new TextBox();
             TotalServerCredit = new Label();
-            Delaccbtn = new Button();
+            FilterIPTextBox = new TextBox();
+            label16 = new Label();
             AccountInfoPanel.SuspendLayout();
             SuspendLayout();
             // 
@@ -128,7 +130,7 @@ namespace Server
             // 
             // RefreshButton
             // 
-            RefreshButton.Location = new Point(455, 43);
+            RefreshButton.Location = new Point(678, 45);
             RefreshButton.Margin = new Padding(4, 3, 4, 3);
             RefreshButton.Name = "RefreshButton";
             RefreshButton.Size = new Size(88, 27);
@@ -181,6 +183,17 @@ namespace Server
             AccountInfoPanel.Name = "AccountInfoPanel";
             AccountInfoPanel.Size = new Size(1248, 243);
             AccountInfoPanel.TabIndex = 14;
+            // 
+            // Delaccbtn
+            // 
+            Delaccbtn.Location = new Point(694, 207);
+            Delaccbtn.Margin = new Padding(4, 3, 4, 3);
+            Delaccbtn.Name = "Delaccbtn";
+            Delaccbtn.Size = new Size(88, 27);
+            Delaccbtn.TabIndex = 40;
+            Delaccbtn.Text = "Delete Acc";
+            Delaccbtn.UseVisualStyleBackColor = true;
+            Delaccbtn.Click += Delaccbtn_Click;
             // 
             // CharactersListView
             // 
@@ -291,7 +304,7 @@ namespace Server
             // 
             // WeekBanButton
             // 
-            WeekBanButton.Location = new Point(502, 208);
+            WeekBanButton.Location = new Point(502, 207);
             WeekBanButton.Margin = new Padding(4, 3, 4, 3);
             WeekBanButton.Name = "WeekBanButton";
             WeekBanButton.Size = new Size(88, 27);
@@ -302,7 +315,7 @@ namespace Server
             // 
             // DayBanButton
             // 
-            DayBanButton.Location = new Point(407, 208);
+            DayBanButton.Location = new Point(407, 207);
             DayBanButton.Margin = new Padding(4, 3, 4, 3);
             DayBanButton.Name = "DayBanButton";
             DayBanButton.Size = new Size(88, 27);
@@ -643,7 +656,7 @@ namespace Server
             // MatchFilterCheckBox
             // 
             MatchFilterCheckBox.AutoSize = true;
-            MatchFilterCheckBox.Location = new Point(551, 48);
+            MatchFilterCheckBox.Location = new Point(774, 50);
             MatchFilterCheckBox.Margin = new Padding(4, 3, 4, 3);
             MatchFilterCheckBox.Name = "MatchFilterCheckBox";
             MatchFilterCheckBox.Size = new Size(89, 19);
@@ -696,22 +709,31 @@ namespace Server
             TotalServerCredit.TabIndex = 23;
             TotalServerCredit.Text = "Total Server Credit:";
             // 
-            // Delaccbtn
+            // FilterIPTextBox
             // 
-            Delaccbtn.Location = new Point(694, 208);
-            Delaccbtn.Margin = new Padding(4, 3, 4, 3);
-            Delaccbtn.Name = "Delaccbtn";
-            Delaccbtn.Size = new Size(88, 27);
-            Delaccbtn.TabIndex = 40;
-            Delaccbtn.Text = "Delete Acc";
-            Delaccbtn.UseVisualStyleBackColor = true;
-            Delaccbtn.Click += Delaccbtn_Click;
+            FilterIPTextBox.Location = new Point(541, 45);
+            FilterIPTextBox.Margin = new Padding(4, 3, 4, 3);
+            FilterIPTextBox.Name = "FilterIPTextBox";
+            FilterIPTextBox.Size = new Size(116, 23);
+            FilterIPTextBox.TabIndex = 26;
+            // 
+            // label16
+            // 
+            label16.AutoSize = true;
+            label16.Location = new Point(460, 48);
+            label16.Margin = new Padding(4, 0, 4, 0);
+            label16.Name = "label16";
+            label16.Size = new Size(49, 15);
+            label16.TabIndex = 25;
+            label16.Text = "Filter IP:";
             // 
             // AccountInfoForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1276, 532);
+            Controls.Add(FilterIPTextBox);
+            Controls.Add(label16);
             Controls.Add(ServerCreditTextBox);
             Controls.Add(TotalServerCredit);
             Controls.Add(ServerGoldTextBox);
@@ -803,5 +825,7 @@ namespace Server
         private TextBox ServerCreditTextBox;
         private Label TotalServerCredit;
         private Button Delaccbtn;
+        private TextBox FilterIPTextBox;
+        private Label label16;
     }
 }
