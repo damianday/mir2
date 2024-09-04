@@ -1,4 +1,5 @@
 ﻿using CustomFormControl;
+using Server.Account;
 using Server.Database;
 using Server.MirDatabase;
 using Server.MirEnvir;
@@ -550,6 +551,27 @@ namespace Server
         {
             ProcessPlayersOnlineTab(true);
             ProcessGuildViewTab(true);
+        }
+
+        private void heroesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SystemInfoForm form = new SystemInfoForm(8);
+
+            form.ShowDialog();
+        }
+
+        private void CharacterToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CharacterInfoForm form = new CharacterInfoForm();
+
+            form.ShowDialog();
+        }
+
+        private void recipeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            RecipeInfoForm form = new RecipeInfoForm();
+
+            form.ShowDialog();
         }
     }
 }

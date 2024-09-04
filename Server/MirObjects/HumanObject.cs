@@ -536,6 +536,11 @@ namespace Server.MirObjects
                 }
             }
 
+            if (MyGuild != null && MyGuild.Name == Settings.NewbieGuild && Settings.NewbieGuildBuffEnabled == true)
+            {
+                AddBuff(BuffType.Newbie, this, 0, new Stats { [Stat.ExpRatePercent] = Settings.NewbieGuildExpBuff });
+            }
+
             if (refresh)
             {
                 RefreshStats();
@@ -1063,6 +1068,13 @@ namespace Server.MirObjects
                         return false;
                     }
                     break;
+                case MirClass.Archer:
+                    if (!item.Info.RequiredClass.HasFlag(RequiredClass.Archer))
+                    {
+                        ReceiveChat("Archers cannot use this item.", ChatType.System);
+                        return false;
+                    } 
+                    break;
             }
 
             switch (item.Info.RequiredType)
@@ -1379,10 +1391,10 @@ namespace Server.MirObjects
         {
             var pkbodydrop = true;
 
-            if (CurrentMap.Info.NoDropPlayer && Race == ObjectType.Player)
+            if (CurrentMap.Info.NoDropPlayer && (Race == ObjectType.Player || Race == ObjectType.Hero))
                 return;
 
-            if ((killer == null) || ((pkbodydrop) || (killer.Race != ObjectType.Player)))
+            if ((killer == null) || ((pkbodydrop) || (killer.Race != ObjectType.Player) || killer.Race != ObjectType.Hero))
             {
                 for (var i = 0; i < Info.Equipment.Length; i++)
                 {
@@ -1401,7 +1413,7 @@ namespace Server.MirObjects
                     if (item.SealedInfo != null && item.SealedInfo.ExpiryDate > Envir.Now)
                         continue;
 
-                    if (((killer == null) || ((killer != null) && (killer.Race != ObjectType.Player))))
+                    if (((killer == null) || ((killer != null) && ((killer.Race != ObjectType.Player) || (killer.Race != ObjectType.Hero)))))
                     {
                         if (item.Info.Bind.HasFlag(BindMode.BreakOnDeath))
                         {
@@ -1694,6 +1706,7 @@ namespace Server.MirObjects
                 MapIndex = CurrentMap.Info.Index,
                 FileName = CurrentMap.Info.FileName,
                 Title = CurrentMap.Info.Title,
+                Weather = CurrentMap.Info.WeatherParticles,
                 MiniMap = CurrentMap.Info.MiniMap,
                 BigMap = CurrentMap.Info.BigMap,
                 Lights = CurrentMap.Info.Light,
@@ -6840,6 +6853,7 @@ namespace Server.MirObjects
                 MapIndex = CurrentMap.Info.Index,
                 FileName = CurrentMap.Info.FileName,
                 Title = CurrentMap.Info.Title,
+                Weather = CurrentMap.Info.WeatherParticles,
                 MiniMap = CurrentMap.Info.MiniMap,
                 BigMap = CurrentMap.Info.BigMap,
                 Lights = CurrentMap.Info.Light,
@@ -8510,7 +8524,7 @@ namespace Server.MirObjects
                 RefreshMount();
             }
             else
-                ReceiveChat("You haven't a mount...", ChatType.System);
+                ReceiveChat("You do not have a mount equiped.", ChatType.System);
         }
 
         #endregion

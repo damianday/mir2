@@ -588,6 +588,9 @@ namespace Server.MirObjects
 
             UnSummonIntelligentCreature(SummonedCreatureType);
 
+            if (HeroSpawned)
+                DespawnHero();
+
             for (int i = Pets.Count - 1; i >= 0; i--)
             {
                 if (Pets[i].Dead) continue;
@@ -1374,6 +1377,7 @@ namespace Server.MirObjects
                 MapIndex = CurrentMap.Info.Index,
                 FileName = CurrentMap.Info.FileName,
                 Title = CurrentMap.Info.Title,
+                Weather = CurrentMap.Info.WeatherParticles,
                 MiniMap = CurrentMap.Info.MiniMap,
                 BigMap = CurrentMap.Info.BigMap,
                 Lights = CurrentMap.Info.Light,
@@ -1567,6 +1571,7 @@ namespace Server.MirObjects
                 MiniMap = CurrentMap.Info.MiniMap,
                 Lights = CurrentMap.Info.Light,
                 BigMap = CurrentMap.Info.BigMap,
+                WeatherParticles = CurrentMap.Info.WeatherParticles,
                 Lightning = CurrentMap.Info.Lightning,
                 Fire = CurrentMap.Info.Fire,
                 MapDarkLight = CurrentMap.Info.MapDarkLight,
@@ -1662,7 +1667,7 @@ namespace Server.MirObjects
                             Enqueue(ob.GetInfo(), c);
                         }
 
-                        if (ob.Race == ObjectType.Player || ob.Race == ObjectType.Monster)
+                        if (ob.Race == ObjectType.Player || ob.Race == ObjectType.Monster || ob.Race == ObjectType.Hero)
                         {
                             ob.SendHealth(this);
                         }
@@ -3090,7 +3095,8 @@ namespace Server.MirObjects
                             ReceiveChat("Cannot leave guild whilst at war.", ChatType.System);
                             return;
                         }
-
+                        if (MyGuild.Name == Settings.NewbieGuild && Settings.NewbieGuildBuffEnabled == true) RemoveBuff(BuffType.Newbie);
+                        if (HasBuff(BuffType.Guild)) RemoveBuff(BuffType.Guild);
                         MyGuild.DeleteMember(this, Name);
                         break;
 
@@ -3453,6 +3459,12 @@ namespace Server.MirObjects
                         if (MyGuild == enemyGuild)
                         {
                             ReceiveChat("Cannot go to war with your own guild.", ChatType.System);
+                            return;
+                        }
+
+                        if (enemyGuild.Name == Settings.NewbieGuild)
+                        {
+                            ReceiveChat("Cannot go to war with new players guild.", ChatType.System);
                             return;
                         }
 
@@ -4349,6 +4361,7 @@ namespace Server.MirObjects
                 MapIndex = CurrentMap.Info.Index,
                 FileName = CurrentMap.Info.FileName,
                 Title = CurrentMap.Info.Title,
+                Weather = CurrentMap.Info.WeatherParticles,
                 MiniMap = CurrentMap.Info.MiniMap,
                 BigMap = CurrentMap.Info.BigMap,
                 Lights = CurrentMap.Info.Light,
@@ -5753,6 +5766,10 @@ namespace Server.MirObjects
                             }
                             Info.MaximumHeroCount++;
                             Array.Resize(ref Info.Heroes, Info.MaximumHeroCount);
+                            break;
+                        case 15: //Increase Hero Inventory
+                            ReceiveChat("Must be used on Hero", ChatType.Hint);
+                            Enqueue(p);
                             break;
                     }
                     break;
@@ -8861,11 +8878,20 @@ namespace Server.MirObjects
                 member.Enqueue(new S.ObjectHealth { ObjectID = ObjectID, Percent = PercentHealth, Expire = time });
                 Enqueue(new S.ObjectHealth { ObjectID = member.ObjectID, Percent = member.PercentHealth, Expire = time });
 
+                if (Hero != null)
+                {
+                    member.Enqueue(new S.ObjectHealth { ObjectID = Hero.ObjectID, Percent = Hero.PercentHealth, Expire = time }); // Send Party Leader's HeroHP to Group Members
+                }
+                if (member.Hero != null)
+                {
+                    Enqueue(new S.ObjectHealth { ObjectID = member.Hero.ObjectID, Percent = member.Hero.PercentHealth, Expire = time }); // Send Party Members HeroHP to Leader
+                }
+
                 for (int j = 0; j < member.Pets.Count; j++)
                 {
                     MonsterObject pet = member.Pets[j];
 
-                    Enqueue(new S.ObjectHealth { ObjectID = pet.ObjectID, Percent = pet.PercentHealth, Expire = time });
+                    Enqueue(new S.ObjectHealth { ObjectID = pet.ObjectID, Percent = pet.PercentHealth, Expire = time }); 
                 }
             }
 
@@ -9604,6 +9630,12 @@ namespace Server.MirObjects
                 return;
             }
 
+            if (enemyGuild.Name == Settings.NewbieGuild)
+            {
+                ReceiveChat("Cannot go to war with new players guild.", ChatType.System);
+                return;
+            }
+
             if (MyGuild.WarringGuilds.Contains(enemyGuild))
             {
                 ReceiveChat("Already at war with this guild.", ChatType.System);
@@ -9667,7 +9699,7 @@ namespace Server.MirObjects
                     GuildBuffInfo BuffInfo = Envir.FindGuildBuffInfo(id);
                     if (BuffInfo == null)
                     {
-                        ReceiveChat("Buff does not excist.", ChatType.System);
+                        ReceiveChat("Buff does not exist.", ChatType.System);
                         return;
                     }
                     if (MyGuild.GetBuff(id) != null)
@@ -10282,6 +10314,7 @@ namespace Server.MirObjects
                         FishingChanceCounter = 0;
 
                         UserItem dropItem = null;
+                        UserItem reel = rod.Slots[(int)FishingSlot.Reel];
 
                         foreach (DropInfo drop in Envir.FishingDrops.Where(x => x.Type == fishingCell.FishingAttribute))
                         {
@@ -10304,6 +10337,7 @@ namespace Server.MirObjects
                         else if (FreeSpace(Info.Inventory) < 1)
                         {
                             ReceiveChat(GameLanguage.NoBagSpace, ChatType.System);
+                            cancel = true;
                         }
                         else
                         {
@@ -10322,7 +10356,10 @@ namespace Server.MirObjects
 
                         DamagedFishingItem(FishingSlot.Reel, 1);
 
-                        cancel = true;
+                        if (!FishingAutocast || (FishingAutocast && reel.CurrentDura == 0))
+                        {
+                            cancel = true;
+                        }
                     }
                     else
                     {
@@ -12884,7 +12921,7 @@ namespace Server.MirObjects
               
         }
 
-        public void GameshopBuy(int GIndex, byte Quantity)
+        public void GameshopBuy(int GIndex, byte Quantity, int PType)
         {
             if (Quantity < 1 || Quantity > 99) return;
 
@@ -12949,29 +12986,30 @@ namespace Server.MirObjects
             if (stockAvailable)
             {
                 MessageQueue.EnqueueDebugging(Info.Name + " is trying to buy " + Product.Info.FriendlyName + " x " + Quantity + " - Stock is available");
-                
-                var cost = Product.CreditPrice * Quantity;
-                if (cost < Account.Credit || cost == 0)
+
+                if (PType == 0)
                 {
-                    canAfford = true;
-                    CreditCost = cost;
-                }
-                else if (Product.CanBuyGold)
-                {
-                    //Needs to attempt to pay with gold and credits
-                    var totalCost = ((Product.GoldPrice * Quantity) / cost) * (cost - Account.Credit);
-                    if (Account.Gold >= totalCost)
+                    var cost = Product.CreditPrice * Quantity;
+                    if (Product.CanBuyCredit && cost <= Account.Credit)
                     {
-                        GoldCost = totalCost;
-                        CreditCost = Account.Credit;
                         canAfford = true;
+                        CreditCost = cost;
                     }
-                    else
+                }
+                else if (PType == 1)
+                {
+                    var goldcost = Product.GoldPrice * Quantity;
+                    if (Product.CanBuyGold && goldcost <= Account.Gold)
                     {
-                        ReceiveChat("You don't have enough currency for your purchase.", ChatType.System);
-                        MessageQueue.EnqueueDebugging(Info.Name + " is trying to buy " + Product.Info.FriendlyName + " x " + Quantity + " - not enough currency.");
-                        return;
+                        canAfford = true;
+                        GoldCost = goldcost;
                     }
+                }
+                else
+                {
+                    ReceiveChat("You don't have enough currency for your purchase.", ChatType.System);
+                    MessageQueue.EnqueueDebugging(Info.Name + " is trying to buy " + Product.Info.FriendlyName + " x " + Quantity + " - not enough currency.");
+                    return;
                 }
             }
             else
@@ -12981,15 +13019,20 @@ namespace Server.MirObjects
 
             if (canAfford)
             {
-                MessageQueue.EnqueueDebugging(Info.Name + " is trying to buy " + Product.Info.FriendlyName + " x " + Quantity + " - Has enough currency.");
-                Account.Gold -= GoldCost;
-                Account.Credit -= CreditCost;
+                MessageQueue.EnqueueDebugging(Info.Name + " is trying to buy " + Product.Info.FriendlyName + " x " + Quantity + " using " + PType + " - Has enough currency.");
+                if (PType == 0)
+                {
+                    Account.Credit -= CreditCost;
+                    Report.CreditChanged(CreditCost, true, Product.Info.FriendlyName);
+                    if (CreditCost != 0) Enqueue(new S.LoseCredit { Credit = CreditCost });
 
-                Report.GoldChanged(GoldCost, true, Product.Info.FriendlyName);
-                Report.CreditChanged(CreditCost, true, Product.Info.FriendlyName);
-
-                if (GoldCost != 0) Enqueue(new S.LoseGold { Gold = GoldCost });
-                if (CreditCost != 0) Enqueue(new S.LoseCredit { Credit = CreditCost });
+                }
+                if (PType == 1)
+                {
+                    Account.Gold -= GoldCost;
+                    Report.GoldChanged(GoldCost, true, Product.Info.FriendlyName);
+                    if (GoldCost != 0) Enqueue(new S.LoseGold { Gold = GoldCost });
+                }
 
                 if (Product.iStock && Product.Stock != 0)
                 {
@@ -13661,6 +13704,7 @@ namespace Server.MirObjects
                 MirClass.Wizard => new WizardHero(CurrentHero, this),
                 MirClass.Taoist => new TaoistHero(CurrentHero, this),
                 MirClass.Assassin => new AssassinHero(CurrentHero, this),
+                MirClass.Archer => new ArcherHero(CurrentHero, this),
                 _ => new HeroObject(CurrentHero, this)
             };            
 
@@ -13704,7 +13748,9 @@ namespace Server.MirObjects
             if (Hero != null)
             {
                 if (Hero.Node != null)
+                {
                     Hero.Revive(Hero.Stats[Stat.HP], true);
+                }
                 else
                 {
                     CurrentHero.HP = Hero.Stats[Stat.HP];
@@ -13746,6 +13792,22 @@ namespace Server.MirObjects
             CurrentHero.SealCount++;
             Info.Heroes[CurrentHeroIndex] = null;
             CurrentHero = null;
+        }
+
+        public void DeleteHero()
+        {
+            if (CurrentHero == null) return;
+
+            if (Hero != null)
+            {
+                DespawnHero();
+                Info.HeroSpawned = false;
+                Enqueue(new S.UpdateHeroSpawnState { State = HeroSpawnState.None });
+            }
+
+            Info.Heroes[CurrentHeroIndex] = null;
+            CurrentHero = null;
+            ReceiveChat(string.Format("Hero has been released from service"), ChatType.Hint);
         }
 
         private bool AddHero(HeroInfo hero)
@@ -13793,6 +13855,29 @@ namespace Server.MirObjects
             }
 
             Enqueue(p);
+        }
+
+        public void SendNPCGoods(S.NPCGoods goods)
+        {
+            var chunks = Functions.SplitList(10, goods.List); // Split into chunks of 10..
+            if (chunks.Count == 1)
+            {
+                goods.Progress = 3;
+                Enqueue(goods);
+                return;
+            }
+
+            //  Loop through the chunks
+            for (var i = 0; i < chunks.Count; i++)
+            {
+                byte prog;
+
+                if (i == 0) prog = 1; // First List
+                else if (i == chunks.Count - 1) prog = 3; // Final List
+                else prog = 2; // Middle
+
+                Enqueue(new S.NPCGoods { Progress = prog, List = chunks[i], Rate = goods.Rate, Type = goods.Type, HideAddedStats = goods.HideAddedStats });
+            }
         }
     }
 }

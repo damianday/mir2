@@ -53,7 +53,7 @@ namespace Server.MirEnvir
         public static object LoadLock = new object();
 
         public const int MinVersion = 60;
-        public const int Version = 108;
+        public const int Version = 110;
         public const int CustomVersion = 0;
         public static readonly string DatabasePath = Path.Combine(".", "Server.MirDB");
         public static readonly string AccountPath = Path.Combine(".", "Server.MirADB");
@@ -2498,7 +2498,7 @@ namespace Server.MirEnvir
                 return false;
             }
 
-            if (p.Class == MirClass.Assassin && !Settings.AllowCreateAssassin || p.Class == MirClass.Archer && !Settings.AllowCreateArcher)
+            if (p.Class == MirClass.Warrior && !Settings.Hero_CanCreateClass[0] || p.Class == MirClass.Wizard && !Settings.Hero_CanCreateClass[1] || p.Class == MirClass.Taoist && !Settings.Hero_CanCreateClass[2] || p.Class == MirClass.Assassin && !Settings.Hero_CanCreateClass[3] || p.Class == MirClass.Archer && !Settings.Hero_CanCreateClass[4])
             {
                 c.Enqueue(new S.NewHero { Result = 3 });
                 return false;
@@ -2514,16 +2514,17 @@ namespace Server.MirEnvir
             }
 
             return true;
-        }    
+        }
 
         public bool AccountExists(string accountID)
         {
-                for (var i = 0; i < AccountList.Count; i++)
-                    if (string.Compare(AccountList[i].AccountID, accountID, StringComparison.OrdinalIgnoreCase) == 0)
-                        return true;
+            for (var i = 0; i < AccountList.Count; i++)
+                if (string.Compare(AccountList[i].AccountID, accountID, StringComparison.OrdinalIgnoreCase) == 0)
+                    return true;
 
-                return false;
+            return false;
         }
+
         public bool CharacterExists(string name)
         {
             for (var i = 0; i < CharacterList.Count; i++)
@@ -2533,14 +2534,91 @@ namespace Server.MirEnvir
             return false;
         }
 
+        public List<CharacterInfo> MatchPlayer(string PlayerID, bool match = false)
+        {
+            if (string.IsNullOrEmpty(PlayerID)) return new List<CharacterInfo>(CharacterList);
+
+            List<CharacterInfo> list = new List<CharacterInfo>();
+
+            for (int i = 0; i < CharacterList.Count; i++)
+            {
+                if (match)
+                {
+                    if (CharacterList[i].Name.Equals(PlayerID, StringComparison.OrdinalIgnoreCase))
+                        list.Add(CharacterList[i]);
+                }
+                else
+                {
+                    if (CharacterList[i].Name.IndexOf(PlayerID, StringComparison.OrdinalIgnoreCase) >= 0)
+                        list.Add(CharacterList[i]);
+                }
+            }
+
+            return list;
+        }
+        public List<CharacterInfo> MatchPlayerbyItem(string itemIdentifier, bool match = false)
+        {
+            List<CharacterInfo> list = new List<CharacterInfo>();
+
+            bool isNumeric = ulong.TryParse(itemIdentifier, out ulong itemId);
+
+            for (int i = 0; i < CharacterList.Count; i++)
+            {
+                if (match)
+                {
+                    foreach (var item in CharacterList[i].Inventory)
+                        if (item != null && ((isNumeric && item.UniqueID == itemId) || (!isNumeric && item.FriendlyName.Equals(itemIdentifier, StringComparison.OrdinalIgnoreCase))) && !list.Contains(CharacterList[i]))
+                            list.Add(CharacterList[i]);
+
+                    foreach (var item in CharacterList[i].AccountInfo.Storage)
+                        if (item != null && ((isNumeric && item.UniqueID == itemId) || (!isNumeric && item.FriendlyName.Equals(itemIdentifier, StringComparison.OrdinalIgnoreCase))) && !list.Contains(CharacterList[i]))
+                            list.Add(CharacterList[i]);
+
+                    foreach (var item in CharacterList[i].QuestInventory)
+                        if (item != null && ((isNumeric && item.UniqueID == itemId) || (!isNumeric && item.FriendlyName.Equals(itemIdentifier, StringComparison.OrdinalIgnoreCase))) && !list.Contains(CharacterList[i]))
+                            list.Add(CharacterList[i]);
+
+                    foreach (var item in CharacterList[i].Equipment)
+                        if (item != null && ((isNumeric && item.UniqueID == itemId) || (!isNumeric && item.FriendlyName.Equals(itemIdentifier, StringComparison.OrdinalIgnoreCase))) && !list.Contains(CharacterList[i]))
+                            list.Add(CharacterList[i]);
+
+                    foreach (var mail in CharacterList[i].Mail)
+                        foreach (var item in mail.Items)
+                            if (item != null && ((isNumeric && item.UniqueID == itemId) || (!isNumeric && item.FriendlyName.Equals(itemIdentifier, StringComparison.OrdinalIgnoreCase))) && !list.Contains(CharacterList[i]))
+                                list.Add(CharacterList[i]);
+                }
+                else
+                {
+                    foreach (var item in CharacterList[i].Inventory)
+                        if (item != null && ((isNumeric && item.UniqueID == itemId) || (!isNumeric && item.FriendlyName.IndexOf(itemIdentifier, StringComparison.OrdinalIgnoreCase) >= 0)) && !list.Contains(CharacterList[i]))
+                            list.Add(CharacterList[i]);
+
+                    foreach (var item in CharacterList[i].QuestInventory)
+                        if (item != null && ((isNumeric && item.UniqueID == itemId) || (!isNumeric && item.FriendlyName.IndexOf(itemIdentifier, StringComparison.OrdinalIgnoreCase) >= 0)) && !list.Contains(CharacterList[i]))
+                            list.Add(CharacterList[i]);
+
+                    foreach (var item in CharacterList[i].Equipment)
+                        if (item != null && ((isNumeric && item.UniqueID == itemId) || (!isNumeric && item.FriendlyName.IndexOf(itemIdentifier, StringComparison.OrdinalIgnoreCase) >= 0)) && !list.Contains(CharacterList[i]))
+                            list.Add(CharacterList[i]);
+
+                    foreach (var item in CharacterList[i].AccountInfo.Storage)
+                        if (item != null && ((isNumeric && item.UniqueID == itemId) || (!isNumeric && item.FriendlyName.IndexOf(itemIdentifier, StringComparison.OrdinalIgnoreCase) >= 0)) && !list.Contains(CharacterList[i]))
+                            list.Add(CharacterList[i]);
+                }
+            }
+
+            return list;
+        }
+
         public AccountInfo GetAccount(string accountID)
         {
-                for (var i = 0; i < AccountList.Count; i++)
-                    if (string.Compare(AccountList[i].AccountID, accountID, StringComparison.OrdinalIgnoreCase) == 0)
-                        return AccountList[i];
+            for (var i = 0; i < AccountList.Count; i++)
+                if (string.Compare(AccountList[i].AccountID, accountID, StringComparison.OrdinalIgnoreCase) == 0)
+                    return AccountList[i];
 
-                return null;
+            return null;
         }
+
         public AccountInfo GetAccountByCharacter(string name)
         {
             for (var i = 0; i < AccountList.Count; i++)
@@ -2628,6 +2706,7 @@ namespace Server.MirEnvir
 
             return list;
         }
+
 
         public void CreateAccountInfo()
         {
