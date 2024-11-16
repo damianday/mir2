@@ -77,6 +77,11 @@
             label7 = new Label();
             tabControl1 = new TabControl();
             PlayerInfoTab = new TabPage();
+            HeroListView = new ListView();
+            columnHeader1 = new ColumnHeader();
+            columnHeader2 = new ColumnHeader();
+            columnHeader3 = new ColumnHeader();
+            columnHeader4 = new ColumnHeader();
             SearchBox = new GroupBox();
             FlagSearchBox = new NumericUpDown();
             FlagSearch = new Label();
@@ -85,6 +90,7 @@
             QuestInfoListViewNF = new CustomFormControl.ListViewNF();
             QuestIndexHeader = new ColumnHeader();
             QuestStatusHeader = new ColumnHeader();
+            QuestNameHeader = new ColumnHeader();
             ItemInfoTab = new TabPage();
             PlayerItemInfoListViewNF = new CustomFormControl.ListViewNF();
             UIDHeader = new ColumnHeader();
@@ -647,6 +653,7 @@
             // 
             // PlayerInfoTab
             // 
+            PlayerInfoTab.Controls.Add(HeroListView);
             PlayerInfoTab.Controls.Add(SearchBox);
             PlayerInfoTab.Controls.Add(groupBox1);
             PlayerInfoTab.Controls.Add(groupBox2);
@@ -659,6 +666,37 @@
             PlayerInfoTab.TabIndex = 0;
             PlayerInfoTab.Text = "Player Info";
             PlayerInfoTab.UseVisualStyleBackColor = true;
+            // 
+            // HeroListView
+            // 
+            HeroListView.Columns.AddRange(new ColumnHeader[] { columnHeader1, columnHeader2, columnHeader3, columnHeader4 });
+            HeroListView.FullRowSelect = true;
+            HeroListView.GridLines = true;
+            HeroListView.Location = new Point(352, 284);
+            HeroListView.Name = "HeroListView";
+            HeroListView.Size = new Size(325, 147);
+            HeroListView.TabIndex = 49;
+            HeroListView.UseCompatibleStateImageBehavior = false;
+            HeroListView.View = View.Details;
+            // 
+            // columnHeader1
+            // 
+            columnHeader1.Text = "Hero Name";
+            columnHeader1.Width = 100;
+            // 
+            // columnHeader2
+            // 
+            columnHeader2.Text = "Level";
+            columnHeader2.Width = 80;
+            // 
+            // columnHeader3
+            // 
+            columnHeader3.Text = "Class";
+            columnHeader3.Width = 80;
+            // 
+            // columnHeader4
+            // 
+            columnHeader4.Text = "Gender";
             // 
             // SearchBox
             // 
@@ -710,7 +748,7 @@
             // 
             // QuestInfoListViewNF
             // 
-            QuestInfoListViewNF.Columns.AddRange(new ColumnHeader[] { QuestIndexHeader, QuestStatusHeader });
+            QuestInfoListViewNF.Columns.AddRange(new ColumnHeader[] { QuestIndexHeader, QuestStatusHeader, QuestNameHeader });
             QuestInfoListViewNF.Dock = DockStyle.Fill;
             QuestInfoListViewNF.GridLines = true;
             QuestInfoListViewNF.Location = new Point(3, 3);
@@ -729,6 +767,11 @@
             // 
             QuestStatusHeader.Text = "Status";
             QuestStatusHeader.Width = 100;
+            // 
+            // QuestNameHeader
+            // 
+            QuestNameHeader.Text = "Name";
+            QuestNameHeader.Width = 200;
             // 
             // ItemInfoTab
             // 
@@ -863,7 +906,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(692, 471);
+            ClientSize = new Size(709, 471);
             Controls.Add(tabControl1);
             Margin = new Padding(4, 3, 4, 3);
             Name = "PlayerInfoForm";
@@ -966,5 +1009,11 @@
         private ColumnHeader DurabilityHeader;
         private Label CurrentXY;
         private Label label7;
+        private ListView HeroListView;
+        private ColumnHeader columnHeader1;
+        private ColumnHeader columnHeader2;
+        private ColumnHeader columnHeader3;
+        private ColumnHeader columnHeader4;
+        private ColumnHeader QuestNameHeader;
     }
 }

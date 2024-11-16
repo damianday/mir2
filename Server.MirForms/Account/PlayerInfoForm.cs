@@ -1,5 +1,7 @@
 ﻿using Server.MirDatabase;
+using Server.MirEnvir;
 using Server.MirObjects;
+using System.Diagnostics;
 
 namespace Server
 {
@@ -150,9 +152,19 @@ namespace Server
 
             foreach (int completedQuestID in Character.CompletedQuests)
             {
-                // Display the completed quest in the listview
+                QuestInfo completedQuest = SMain.Envir.GetQuestInfo(completedQuestID);
+
                 ListViewItem item = new ListViewItem(completedQuestID.ToString());
                 item.SubItems.Add("Completed");
+                item.SubItems.Add(completedQuest.Name.ToString());
+                QuestInfoListViewNF.Items.Add(item);
+            }
+
+            foreach (QuestProgressInfo currentQuest in Character.CurrentQuests)
+            {
+                ListViewItem item = new ListViewItem(currentQuest.Index.ToString());
+                item.SubItems.Add("In Progress");
+                item.SubItems.Add(currentQuest.Info.Name.ToString());
                 QuestInfoListViewNF.Items.Add(item);
             }
         }
@@ -439,6 +451,7 @@ namespace Server
             UpdatePlayerItems();
             UpdatePlayerMagics();
             UpdatePlayerQuests();
+            UpdateHeroList();
         }
         #endregion
 
@@ -447,24 +460,49 @@ namespace Server
         {
             switch (tabControl1.SelectedIndex)
             {
-                case 0:
+                case 0: //Player
                     Size = new Size(725, 510);
                     break;
-                case 1:
+                case 1: //Quest
                     Size = new Size(423, 510);
                     break;
-                case 2:
+                case 2: //Item
                     Size = new Size(597, 510);
                     break;
-                case 3:
+                case 3: //Magic
                     Size = new Size(458, 510);
                     break;
-                case 4:
-                    Size = new Size(663, 510);
+                case 4: //Pet
+                    Size = new Size(533, 510);
                     break;
             }
 
             UpdateTabs();
+        }
+        #endregion
+
+        #region Hero List
+        private void UpdateHeroList()
+        {
+            ClearHeroList();
+
+            if (Character == null || Character.Heroes == null) return;
+
+            foreach (HeroInfo hero in Character.Heroes)
+            {
+                if (hero == null) continue;
+
+                var listItem = new ListViewItem(hero.Name ?? "Unknown") { Tag = hero };
+                listItem.SubItems.Add(hero.Level.ToString());
+                listItem.SubItems.Add(hero.Class.ToString());
+                listItem.SubItems.Add(hero.Gender.ToString());
+
+                HeroListView.Items.Add(listItem);
+            }
+        }
+        private void ClearHeroList()
+        {
+            HeroListView.Items.Clear();
         }
         #endregion
     }
