@@ -4724,6 +4724,12 @@ namespace Server.MirObjects
                 return;
             }
 
+            if (gridTo == MirGridType.Socket && temp.Info.Type != ItemType.Socket)
+            {
+                Enqueue(p);
+                return;
+            }
+
             if ((temp.SoulBoundId != -1) && (temp.SoulBoundId != Info.Index))
             {
                 Enqueue(p);
@@ -8249,8 +8255,6 @@ namespace Server.MirObjects
 
                 uint gold = (uint)Math.Max(0, cost - cost * Globals.Commission);
 
-                Account.Auctions.Remove(auction);
-                Envir.Auctions.Remove(auction);
                 GainGold(gold);
                 Enqueue(new S.MarketSuccess { Message = string.Format("You sold {0} for {1:#,##0} Gold. \nEarnings: {2:#,##0} Gold.\nCommision: {3:#,##0} Gold.‎", auction.Item.FriendlyName, cost, gold, cost - gold) });
                 return true;
@@ -13906,27 +13910,9 @@ namespace Server.MirObjects
             Enqueue(p);
         }
 
-        public void SendNPCGoods(S.NPCGoods goods)
+        public void SendNPCGoods(List<UserItem> goods, float rate, PanelType panelType, bool hideAddedStats = false)
         {
-            var chunks = Functions.SplitList(10, goods.List); // Split into chunks of 10..
-            if (chunks.Count == 1)
-            {
-                goods.Progress = 3;
-                Enqueue(goods);
-                return;
-            }
-
-            //  Loop through the chunks
-            for (var i = 0; i < chunks.Count; i++)
-            {
-                byte prog;
-
-                if (i == 0) prog = 1; // First List
-                else if (i == chunks.Count - 1) prog = 3; // Final List
-                else prog = 2; // Middle
-
-                Enqueue(new S.NPCGoods { Progress = prog, List = chunks[i], Rate = goods.Rate, Type = goods.Type, HideAddedStats = goods.HideAddedStats });
-            }
+            Enqueue(new S.NPCGoods { List = goods, Rate = rate, Type = panelType, HideAddedStats = hideAddedStats });
         }
     }
 }
